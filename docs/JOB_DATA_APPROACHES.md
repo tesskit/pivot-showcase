@@ -27,7 +27,7 @@ Pivot needs real, current job listings to be useful. Claude's training knowledge
 
 **Status:** Active, primary job data source
 
-**API:** https://rapidapi.com/letscrape-6bRB7reou7/api/jsearch
+**API:** Available via RapidAPI (https://rapidapi.com)
 **Free tier:** 200 requests/month
 **Data source:** Google for Jobs — aggregates Indeed, LinkedIn, Glassdoor, ZipRecruiter in real time
 
