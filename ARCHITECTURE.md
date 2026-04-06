@@ -313,3 +313,4 @@ UptimeRobot pings the health endpoint every 5 minutes to keep the Render service
 | Medium | Immigrant workforce | Credential recognition, language support, non-linear career history |
 | Low | Spanish language support | First non-English language expansion |
 | Low | Rate limiting + guest mode | Turn limits for unauthenticated users |
+| Medium | Real-time Fact-Check verification | Replace Claude-based reasoning verification with actual web search calls — verify job postings are still active, confirm returnship programs are running, validate org activity in real time |
