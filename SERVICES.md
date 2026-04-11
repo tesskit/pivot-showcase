@@ -10,7 +10,8 @@ A quick reference for every external service Pivot uses, what it costs, and wher
 |---|---|---|---|
 | Render | dashboard.render.com | $25/month (Standard) + ~$5-15/month build pipeline | Backend + PostgreSQL. Standard required for 2GB RAM. |
 | Anthropic Claude API | console.anthropic.com | Pay per token | Every Pivot conversation calls the API. Monitor usage in Console. |
-| RapidAPI / JSearch | rapidapi.com | Free up to 200 requests/month | Billing cycle started March 18. Resets April 18. Check Console for usage. |
+| Apify | apify.com | $5/month free credit (pay per usage) | Indeed + LinkedIn scrapers. ~$0.50/1K Indeed results, ~$10/1K LinkedIn results. Monitor usage in Apify Console. |
+| RapidAPI / JSearch | rapidapi.com | Free up to 200 requests/month | Fallback only when Apify returns fewer than 10 results. |
 | Claude.ai Pro | claude.ai | Monthly subscription | Development and planning use. |
 
 ---
