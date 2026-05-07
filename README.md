@@ -77,14 +77,14 @@ Every agent in Pivot is designed around this. Empathy first. Strategy second.
 | Vector Database | ChromaDB — local ingest only, not deployed to Render |
 | Backend | Python 3.11 + FastAPI |
 | Frontend | React / Next.js |
-| Job Data | JSearch via RapidAPI (Google for Jobs) + USAJobs. Claude normalizes job titles ("maid" → "Housekeeper"). Nominatim geocodes locations ("Monmouth County" → "Monmouth County, NJ"). Free sources tried and removed — garbage. |
+| Job Data | Apify Indeed + Apify LinkedIn (primary), JSearch fallback, USAJobs always. Claude normalizes job titles ("maid" → "Housekeeper"). Nominatim geocodes locations ("Monmouth County" → "Monmouth County, NJ"). Free sources tried and removed — garbage. |
 | Session DB | PostgreSQL (Render) + psycopg2 — primary session store with blob fallback |
 | Deployment | Vercel (frontend) + Render Standard (backend) |
 | Data Sources | BLS, AAUW, iRelaunch, Path Forward, custom transferable skills corpus |
 
 ---
 
-## Seven-Agent Pipeline
+## Eight-Agent Pipeline (6 Agents + 2 Subagents)
 ```
 User Input
     ↓
@@ -97,7 +97,9 @@ Orchestrator → Intake → Research → Fact-Check → Application Coach → Na
 |---|---|
 | Orchestrator | Routes to Intake, manages state |
 | Intake | Builds her profile through warm conversation |
-| Research | Finds salary data, job listings, situation-specific resources |
+| Research | Coordinates two parallel subagents: Job Search and Courses |
+| Job Search Subagent | Apify Indeed + LinkedIn primary, JSearch fallback, USAJobs always |
+| Courses Subagent | 3-5 recommended courses for target role, runs in parallel via background thread |
 | Fact-Check | Verifies everything before it reaches her |
 | Application Coach | Resume bullets, cover letter angle, skills to highlight, quick win |
 | Narrative | Translates her experience into market language, builds her STAR story |
@@ -130,7 +132,7 @@ Orchestrator → Intake → Research → Fact-Check → Application Coach → Na
 - ✅ Step 3: Research, Fact-Check, Narrative agents wired
 - ✅ Step 4: RAG pipeline (366 chunks, ChromaDB local), Application Coach agent, equity audit, all prompt/skill files load from disk
 - ✅ Step 5: React/Next.js frontend, FastAPI, JSearch + USAJobs, Resend email, deploy to Vercel + Render, lightweight numpy RAG (no HuggingFace/ChromaDB on server)
-- ⬜ Step 6: Expand RAG corpus, Indeed Publisher API integration, Google OAuth + PostgreSQL user accounts
+- ⬜ Step 6: Apify Indeed + LinkedIn direct integration, geocode cache, source labels, Courses subagent, job persistence fix
 
 ---
 

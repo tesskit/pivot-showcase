@@ -42,7 +42,7 @@ The Synthesizer response in the chat is the conversation. The emailed career pac
 
 ## 3. Multi-Agent Architecture
 
-Pivot uses LangGraph to orchestrate seven specialized agents. The user only ever hears from the Synthesizer.
+Pivot uses LangGraph to orchestrate eight specialized agents (six primary + two subagents inside Research). The user only ever hears from the Synthesizer.
 ```
 User Input
     ↓
@@ -72,6 +72,8 @@ Her Response
 | Orchestrator | User message | Routes to Intake | None |
 | Intake | Conversation history | Profile JSON + PROFILE block | None |
 | Research | profile_complete=True | Salary data, job listings, RAG context | profile_complete |
+| Job Search Subagent | profile + query | Live listings from Apify/JSearch/USAJobs | Runs inside Research |
+| Courses Subagent | target role | 3-5 recommended courses with URLs | Runs inside Research in parallel |
 | Fact-Check | Research summary | Verified research with labels | research exists |
 | Application Coach | Verified research + narrative | Resume bullets, quick win | profile_complete + verified_research |
 | Narrative | Profile + verified research | STAR story, market language | profile_complete + verified_research |
@@ -247,6 +249,9 @@ The email is the primary deliverable — not the chat:
 | /chat | POST | Run the full LangGraph pipeline |
 | /email | POST | Send formatted career packet via Resend |
 | /ping | POST | Reset session TTL clock — called by "Keep it going" button |
+| /chat/fast | POST | Phase 1: Intake + Research + Jobs + Courses. Returns in ~30-45s |
+| /chat/finish | POST | Phase 2: Narrative + App Coach + Synthesizer. Called after fast returns |
+| /session/load | POST | Load session state for session restore on return banner |
 | /session | DELETE | Explicit session cleanup — called by "No thanks" button |
 
 ### 9.2 Email Architecture
@@ -314,4 +319,4 @@ UptimeRobot pings the health endpoint every 5 minutes to keep the Render service
 | Low | Spanish language support | First non-English language expansion |
 | Low | Rate limiting + guest mode | Turn limits for unauthenticated users |
 | Medium | Real-time Fact-Check verification | Replace Claude-based reasoning verification with actual web search calls — verify job postings are still active, confirm returnship programs are running, validate org activity in real time |
-| Medium | Suggested Courses — live API subagent | Research Agent spawns a Courses subagent in parallel with the job search subagent via asyncio.gather — no additional pipeline time. Pulls live courses from Coursera API (and/or Udemy, Google Career Certificates) relevant to her target role. Each course returned with name, platform, free/paid status, estimated time to complete, and direct link. Courses appear in the email packet as a section after job listings, and as a swap-in card on the desktop chat screen that populates when the subagent returns. RAG not used — live API only for current availability and pricing. |
+| Done | Suggested Courses subagent | Runs in parallel background thread inside Research. Returns 3-5 courses with name, platform, cost, URL. Shown in sidebar and email packet. |
