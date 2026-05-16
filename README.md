@@ -71,7 +71,7 @@ Every agent in Pivot is designed around this. Empathy first. Strategy second.
 | Layer | Technology |
 |---|---|
 | Agent Orchestration | LangGraph |
-| LLM | Anthropic Claude API (claude-sonnet-4-20250514) |
+| LLM | Anthropic Claude API — Sonnet 4.6 primary (`claude-sonnet-4-6`), Haiku 4.5 for lightweight tasks (`claude-haiku-4-5-20251001`) |
 | Embeddings (ingest) | HuggingFace `all-MiniLM-L6-v2` — runs locally only, never on Render |
 | RAG Runtime | Pre-computed `embeddings.npz` + numpy cosine similarity — no model on server |
 | Vector Database | ChromaDB — local ingest only, not deployed to Render |
