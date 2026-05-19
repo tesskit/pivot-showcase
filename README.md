@@ -103,7 +103,7 @@ Orchestrator → Intake → Research → Fact-Check → Application Coach → Na
 | Fact-Check | Verifies everything before it reaches her |
 | Application Coach | Resume bullets, cover letter angle, skills to highlight, quick win |
 | Narrative | Translates her experience into market language, builds her STAR story |
-| Synthesizer | The only voice she hears — warm, coherent, one question at the end |
+| Synthesizer | Her voice post-profile — warm, coherent, one question at the end |
 
 ---
 
@@ -132,7 +132,7 @@ Orchestrator → Intake → Research → Fact-Check → Application Coach → Na
 - ✅ Step 3: Research, Fact-Check, Narrative agents wired
 - ✅ Step 4: RAG pipeline (366 chunks, ChromaDB local), Application Coach agent, equity audit, all prompt/skill files load from disk
 - ✅ Step 5: React/Next.js frontend, FastAPI, JSearch + USAJobs, Resend email, deploy to Vercel + Render, lightweight numpy RAG (no HuggingFace/ChromaDB on server)
-- ⬜ Step 6: Apify Indeed + LinkedIn direct integration, geocode cache, source labels, Courses subagent, job persistence fix
+- ✅ Step 6: Apify Indeed + LinkedIn direct integration, geocode cache, source labels, Courses subagent, job persistence fix
 
 ---
 

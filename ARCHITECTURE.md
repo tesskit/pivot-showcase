@@ -58,7 +58,7 @@ Application Coach     ← resume bullets, cover letter angle, quick win
     ↓
 Narrative Agent       ← STAR story, market language translation
     ↓
-Synthesizer Agent     ← the only voice she hears after her profile is complete
+Synthesizer Agent     ← her voice after her profile is complete — Intake speaks before then
     ↓
 Her Response
 ```
