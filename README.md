@@ -9,7 +9,7 @@
 
 ## Live Demo
 🔄 [pivotforwomen.com](https://pivotforwomen.com)
-▶ [Watch a 2-minute demo](https://youtu.be/01qlKzlBgJA)
+▶ [Watch the demo](https://youtu.be/01qlKzlBgJA)
 
 Access is token-gated during soft launch. Request your preview token directly in the app — a confirmation email will be sent to you via Resend.
 
