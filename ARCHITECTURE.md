@@ -119,17 +119,25 @@ PivotState is the baton passed between every agent:
 
 ```python
 class PivotState(TypedDict):
-    messages: List[dict]        # full conversation history
-    user_input: str             # her most recent message
-    profile: dict               # what we know about her
-    research: dict              # Research Agent output
-    verified_research: dict     # Fact-Check Agent output
-    narrative: dict             # STAR story + resume bullets
-    application_coach: dict     # resume bullets, cover letter angle, quick win
-    live_jobs: str              # raw job listings with apply links — bypasses summarization
-    response: str               # the final response she sees
+    messages: List[dict]           # full conversation history
+    user_input: str                # her most recent message
+    profile: dict                  # what we know about her
+    extracted_profile: dict        # accumulated by the Python extractor across turns
+    work_arrangement: str          # remote / hybrid / in-person / any
+    research: dict                 # Research Agent output
+    verified_research: dict        # Fact-Check Agent output
+    narrative: dict                # STAR story + resume bullets
+    application_coach: dict        # resume bullets, cover letter angle, quick win
+    live_jobs: str                 # raw job listings with apply links, bypasses summarization
+    courses: str                   # Courses Subagent output
+    response: str                  # the final response she sees
     turn_count: int
     profile_complete: bool
+    excluded_employers: List[str]  # employers she has explicitly rejected
+    _pipeline_complete: bool       # set after the first full pipeline run, never cleared
+    _is_resarch: bool              # set by the Orchestrator on a re-search
+    _resarch_target: str           # new job target for a re-search, set by the Orchestrator
+    target_industry: str           # industry qualifier for the job search
 ```
 
 The `live_jobs` field is critical — it bypasses the Research and Narrative agents' prose summarization that would strip apply links. Raw listings are stored directly in state and passed to the Synthesizer as structured text.
@@ -251,7 +259,7 @@ Real results:
 
 ### 7.2 Location Normalization — Nominatim Geocoding
 
-Women describe where they live in human terms. "Monmouth County." "Central NJ." "Near Princeton." JSearch works on city + state format. The fix: Nominatim (OpenStreetMap's free geocoding API) converts any location format to clean city/state that JSearch understands. Free, no API key required.
+Women describe where they live in human terms. "Monmouth County." "Central NJ." "Near Princeton." The job sources (Indeed, LinkedIn, JSearch) work best with a city and state. The fix: Nominatim (OpenStreetMap's free geocoding API) converts any location format to a clean city and state. That cleaned location is used for the Apify Indeed and LinkedIn searches and for the JSearch fallback. Free, no API key required.
 
 Real results:
 - `"Monmouth County NJ"` → `"Monmouth County, NJ"`
