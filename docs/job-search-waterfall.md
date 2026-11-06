@@ -123,7 +123,7 @@ Pivot 1.0 uses the following 5-layer waterfall:
 
 ---
 
-## Interview Talking Points
+## Key Design Decisions
 
 - **Graceful degradation** — five-layer waterfall means the pipeline never fails due to a job API outage
 - **Direct vs aggregator** — Apify scrapes Indeed and LinkedIn directly, eliminating the aggregator layer for better relevance and fresher data

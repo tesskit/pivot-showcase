@@ -199,9 +199,9 @@ The Research Agent runs Indeed and LinkedIn sequentially, deduplicates by compan
 
 ---
 
-## Interview Talking Points
+## Key Design Decisions
 
-This five-approach architecture demonstrates several senior engineering decisions worth discussing:
+This comparison of approaches, and the waterfall it led to, reflects several deliberate design decisions:
 
 - **Graceful degradation** — five-layer waterfall means the pipeline never fails due to a job API outage; it falls back silently through each layer
 - **Source attribution** — each listing is labeled [Indeed] or [LinkedIn] in the Synthesizer output; users know exactly where each job came from
