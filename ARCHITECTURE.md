@@ -278,7 +278,7 @@ When all live sources (Apify Indeed and LinkedIn, JSearch, and USAJobs) return 0
 React/Next.js deployed on Vercel. Communicates with FastAPI backend via HTTP.
 
 ### 8.2 Key Features
-- Token gate (access page) with GSAP stagger animation on load
+- Token gate (access page) with GSAP stagger animation on load. The backend checks the typed token (`/token/check`), and several tokens can be active at once through the `PREVIEW_TOKENS` setting
 - Chat interface with CSS fadeUp animation on message bubbles
 - Inline Apply Now ✦ buttons rendered from `Apply: https://...` lines in Synthesizer output
 - Recommended courses card: in the sidebar on desktop, inside the chat message area on phones (the sidebar is hidden at 768px and under)
@@ -304,6 +304,7 @@ The email is the primary deliverable — not the chat:
 | Endpoint | Method | Purpose |
 |---|---|---|
 | / | GET, HEAD | Health check — UptimeRobot pings this |
+| /token/check | POST | Check whether a typed access token is valid |
 | /chat | POST | Run the full LangGraph pipeline |
 | /email | POST | Send formatted career packet via Resend |
 | /ping | POST | Reset session TTL clock — called by "Keep it going" button |
