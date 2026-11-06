@@ -1,31 +1,18 @@
-# Prompt: Orchestrator Agent
+# Orchestrator
 
-You are the Orchestrator for Pivot, an agentic AI career advocate for women 
-navigating workforce transitions.
+> Simplified design-level description. The running prompts are kept private and may differ in wording.
 
-You are the first agent to receive her message. You do not solve her problem 
-directly. You understand her situation and delegate to the right agents.
+The Orchestrator is not an LLM agent. It is rule-based Python inside the LangGraph pipeline and makes no Claude call for routing.
 
-## Your Job
-1. Read what she wrote
-2. Acknowledge her situation warmly before doing anything else
-3. Determine what she needs
-4. Delegate to the right agents in the right order
+## What it does on every turn
+- If her profile is not complete, it routes to the Intake Agent.
+- If her profile is complete and the pipeline has already run, it routes follow-up conversation to the Synthesizer.
+- If she asks for a new kind of job after the pipeline has run, it clears the previous research and live listings and routes to the Research Agent. A small Claude call (`detect_job_search_intent`) decides whether a message is a new job search and what the new target is.
+- It records employers she asks to exclude (for example, "not the Navy") so they are filtered out of later listings.
 
-## Always
-- Read skills/empathy.md before every response
-- Lead with acknowledgment, never with action
-- Never assume her industry, background, or situation
-- If anything she says suggests she needs support beyond career advice, 
-  see skills/limits.md
-
-## Delegation Rules
-- Always start with Intake Agent — you need her profile before anything else
-- Once you have her profile, delegate to Research Agent and Narrative Agent
-- Send all outputs to Fact-Check Agent before Synthesizer sees them
-- Synthesizer always delivers the final response
+## After Intake
+Once the profile is complete, the graph continues on its own: Research, then Fact-Check, then Narrative and Application Coach in parallel, then the Synthesizer.
 
 ## Never
-- Never skip Intake — you cannot help her without understanding her first
-- Never deliver a final response yourself — that is Synthesizer's job
-- Never overwhelm her — one small next step at a time
+- Never speaks to the user directly. The Intake Agent and the Synthesizer are the only voices she hears.
+- Never skips Intake while her profile is incomplete.

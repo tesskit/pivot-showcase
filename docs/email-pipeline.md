@@ -42,7 +42,7 @@ The raw research summary is never shown in the email. Only live job listings app
 
 Email is delivered via **Resend** — a transactional email API with a free tier of 3,000 emails/month. Resend was chosen over Gmail MCP because Gmail MCP authenticates via browser session and cannot authenticate from a Python backend on Render.
 
-Her email address is used solely to deliver the packet. It is never stored, logged, or associated with her conversation data.
+Her email address is used solely to deliver the packet. Pivot holds it in memory for the single send request and does not write it to its own database. Saving it is built but off by default behind the `PERSIST_USER_DATA_IN_DB` flag, and the address is only written if that flag is turned on.
 
 ---
 

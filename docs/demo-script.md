@@ -1,6 +1,8 @@
 # Pivot — Demo Script
 
-## Persona
+> **Persona update:** The current demo persona is **Sarah** (HR coordinator, 8 years experience, 6-year career gap for kids, Chicago, targeting HR or HR tech). **Ada**, the persona and script below, is the original version and is **outdated**. It is kept for reference only.
+
+## Persona (original, outdated: Ada)
 **Name:** Ada (named after Ada Lovelace — the first computer programmer)
 **Background:** HR coordinator, 8 years experience
 **Gap:** 6 years out of workforce raising kids

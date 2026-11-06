@@ -1,6 +1,6 @@
 # Pivot — Agent Design
 
-This document explains the reasoning behind Pivot's seven-agent architecture — why seven agents, what each one does, and the design decisions that shaped them.
+Pivot is built from seven agents plus one subagent. This document explains why the work is split this way, what each one does, and the design decisions that shaped them.
 
 ---
 
@@ -26,20 +26,23 @@ The seven agents are not arbitrary. Each exists because the task it owns cannot 
 ## The Agents
 
 ### Orchestrator
-The traffic controller. Receives the user's message, delegates to Intake, and enforces the pipeline order. Never speaks to the user directly. Never skips Intake — you cannot advocate for someone you don't understand.
+The traffic controller. It is rule-based Python, not an LLM agent, and makes no Claude call. Each turn it routes to Intake while her profile is incomplete, to Research when she asks for a new kind of job after the pipeline has run, or to the Synthesizer for follow-up conversation. It also tracks employers she asks to exclude. It never speaks to the user and never skips Intake while her profile is incomplete, because you cannot advocate for someone you don't understand.
 
 ### Intake
 The first voice she hears. Its only job is to understand her situation before anything else happens. Plain prose only. One question at a time. Never advice, never resources, never next steps — just warm, open listening until her profile is complete.
 
 The PROFILE block is Intake's output — a structured JSON object that every downstream agent reads. It includes her role, target, location, situation archetype, accomplishment, impact, skills, obstacles, and outcome.
 
-**Key design decision:** The profile gates the rest of the pipeline. Research, Fact-Check, Narrative, and Application Coach all wait for `profile_complete: true`. This prevents the pipeline from running on incomplete information.
+**Key design decision:** The profile gates the rest of the pipeline. Research waits for `profile_complete: true`, and Narrative and Application Coach need both a complete profile and verified research. Each downstream agent skips itself when its input is missing, so the pipeline never runs on incomplete information.
 
 ### Research
-Finds real data: live job listings via JSearch and USAJobs, salary ranges from BLS, returnship programs from iRelaunch and Path Forward, women's professional orgs by industry. Never guesses. Never assumes tech. Always anchors salary to her actual experience level — not entry-level, not the median. Women systematically undersell; Pivot corrects for this.
+Finds real data: live job listings from Apify (Indeed and LinkedIn), with JSearch as a fallback and USAJobs for government roles, salary ranges from BLS, returnship programs from iRelaunch and Path Forward, women's professional orgs by industry. Never guesses. Never assumes tech. Always anchors salary to her actual experience level — not entry-level, not the median. Women systematically undersell; Pivot corrects for this.
+
+### Courses Subagent
+The only subagent. It runs inside Research, in a background thread, while the job search runs, and suggests 3 to 5 courses for her target role from Claude's training knowledge. When it is not sure of a specific course page, it returns the platform's search page instead.
 
 ### Fact-Check
-Verifies everything before it reaches the user. Flags unverified salary figures, stale job postings, inactive returnship programs. Does not remove flagged items — marks them clearly so the Synthesizer can handle them honestly. Live API results (JSearch, USAJobs) pass through as VERIFIED. Claude training knowledge is marked ESTIMATED.
+Verifies everything before it reaches the user. Flags unverified salary figures, stale job postings, inactive returnship programs. Does not remove flagged items — marks them clearly so the Synthesizer can handle them honestly. Live job listings from the pipeline's job sources pass through as VERIFIED. Claude training knowledge is marked ESTIMATED.
 
 ### Application Coach
 Produces the concrete packet: resume bullets tailored to the specific posting, a cover letter opening in first person, skills to highlight with evidence, and one quick win she can act on before she applies. Every output maps to the specific job posting — generic advice is not advocacy.
@@ -48,6 +51,8 @@ Produces the concrete packet: resume bullets tailored to the specific posting, a
 
 ### Narrative
 Translates her experience into market language without losing her voice. Builds the STAR story (Situation, Task, Action, Result) from her five dimensions. Tailors the story to the specific posting. Tests for specificity — a thin accomplishment gets flagged as "Accomplishment too thin" rather than fabricated into a story.
+
+Narrative and Application Coach run in parallel, inside one step of the pipeline.
 
 ### Synthesizer
 The only voice she hears once her profile is complete. Takes all agent outputs and delivers them as a single coherent response — three paragraphs, warm and direct. Leads with acknowledgment. Delivers her narrative. Lists job listings as structured items with apply links. Ends with one question she hasn't already answered. Always ends with the email nudge.

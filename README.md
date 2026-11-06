@@ -79,32 +79,37 @@ Every agent in Pivot is designed around this. Empathy first. Strategy second.
 | Backend | Python 3.11 + FastAPI |
 | Frontend | React / Next.js |
 | Job Data | Apify Indeed + Apify LinkedIn (primary), JSearch fallback, USAJobs always. Claude normalizes job titles ("maid" → "Housekeeper"). Nominatim geocodes locations ("Monmouth County" → "Monmouth County, NJ"). Free sources tried and removed — garbage. |
-| Session DB | PostgreSQL (Render) + psycopg2 — primary session store with blob fallback |
+| Session DB | PostgreSQL (Render) + psycopg2: optional session and email-recipient store, off by default (`PERSIST_USER_DATA_IN_DB`). Otherwise the browser holds session state |
 | Deployment | Vercel (frontend) + Render Standard (backend) |
 | Data Sources | BLS, AAUW, iRelaunch, Path Forward, custom transferable skills corpus |
 
 ---
 
-## Eight-Agent Pipeline (6 Agents + 2 Subagents)
+## Agent Pipeline (seven agents plus one subagent)
 ```
 User Input
     ↓
-Orchestrator → Intake → Research → Fact-Check → Application Coach → Narrative → Synthesizer
-                                                                                    ↓
-                                                                             Her Response
+Orchestrator → Intake → Research → Fact-Check → Narrative + Application Coach → Synthesizer
+                           └─ Courses Subagent                (run in parallel)        ↓
+                              (background thread)                               Her Response
 ```
 
 | Agent | Job |
 |---|---|
-| Orchestrator | Routes to Intake, manages state |
+| Orchestrator | Routes each turn to Intake, Research, or the Synthesizer. Rule-based, no LLM call |
 | Intake | Builds her profile through warm conversation |
-| Research | Coordinates two parallel subagents: Job Search and Courses |
-| Job Search Subagent | Apify Indeed + LinkedIn primary, JSearch fallback, USAJobs always |
-| Courses Subagent | 3-5 recommended courses for target role, runs in parallel via background thread |
+| Research | Finds salary data, live job listings, situation-specific resources |
+| Courses Subagent | Runs inside Research, in parallel with the job search, and suggests 3 to 5 courses for her target role |
 | Fact-Check | Verifies everything before it reaches her |
-| Application Coach | Resume bullets, cover letter angle, skills to highlight, quick win |
 | Narrative | Translates her experience into market language, builds her STAR story |
-| Synthesizer | Her voice post-profile — warm, coherent, one question at the end |
+| Application Coach | Resume bullets, cover letter angle, skills to highlight, quick win. Runs in parallel with Narrative |
+| Synthesizer | Her voice post-profile: warm, coherent, one question at the end |
+
+The pipeline is split into two phases so she sees results sooner: a fast phase (Intake, Research, Fact-Check) returns job listings and courses first, then a finish phase (Narrative, Application Coach, Synthesizer) builds the STAR story and the full packet. See [ARCHITECTURE.md](./ARCHITECTURE.md) section 3 for details.
+
+### LangGraph and LangChain
+
+Pivot uses **LangGraph** to run the agents. It passes one shared state object from agent to agent and decides which step runs next. **LangChain** is used for one job only: local RAG ingestion (loading the source documents, splitting them into chunks, and creating embeddings). It is not part of the production server, which reads pre-computed embeddings with numpy. See [ARCHITECTURE.md](./ARCHITECTURE.md) section 3.4.
 
 ---
 
@@ -112,7 +117,7 @@ Orchestrator → Intake → Research → Fact-Check → Application Coach → Na
 
 - RAG embeddings are pre-computed locally from curated source files only — never user data
 - At runtime, no embedding model runs on the server and no user query is sent to a third-party embedding API
-- Session state is stored in PostgreSQL with a 2-hour inactivity TTL — automatically deleted after the session ends. A full state blob is also held client-side as a fallback so no conversation is ever lost.
+- By default, nothing about her conversation or email address is stored on the server. Her session state is kept in her own browser and sent with each request. A PostgreSQL session store (2-hour inactivity TTL) exists behind the `PERSIST_USER_DATA_IN_DB` flag and is off in local and production unless the variable is set to true (no setting is needed on Render to keep it off).
 - Pivot can email you your career summary at any time during your session via Resend — your email address is used only to deliver that message and is never stored
 
 ---
@@ -121,12 +126,16 @@ Orchestrator → Intake → Research → Fact-Check → Application Coach → Na
 
 - 📐 [ARCHITECTURE.md](./ARCHITECTURE.md) — full technical deep dive: agent diagram, RAG pipeline, skill/prompt structure, tradeoffs, equity design decisions
 - 📋 [docs/JOB_DATA_APPROACHES.md](./docs/JOB_DATA_APPROACHES.md) — job data source documentation and architectural decisions
+- 🧩 [docs/agent-design.md](./docs/agent-design.md): why the pipeline is split into agents and what each one does
+- 🔎 [docs/rag-pipeline.md](./docs/rag-pipeline.md): RAG pipeline, including the move from HuggingFace on the server to pre-computed embeddings
+- ✉️ [docs/email-pipeline.md](./docs/email-pipeline.md): how the career packet email is built and delivered
+- 💸 [SERVICES.md](./SERVICES.md): external services and what they cost
 
 ---
 
 ## Project Status
 
-🚧 Active development — Step 5 complete
+🚧 Active development: Step 6 complete
 
 - ✅ Step 1: Project scaffold, LangGraph graph, basic agent stubs
 - ✅ Step 2: Intake Agent, profile extraction, PROFILE block
