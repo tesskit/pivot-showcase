@@ -121,7 +121,7 @@ PivotState is the baton passed between every agent:
 class PivotState(TypedDict):
     messages: List[dict]           # full conversation history
     user_input: str                # her most recent message
-    profile: dict                  # what we know about her
+    profile: dict                  # what I know about her
     extracted_profile: dict        # accumulated by the Python extractor across turns
     work_arrangement: str          # remote / hybrid / in-person / any
     research: dict                 # Research Agent output
@@ -179,16 +179,16 @@ After 1h45m of inactivity, a modal overlay appears (not an inline banner — it'
 ### 6.2 Embeddings Stack
 - **Ingest (local only):** HuggingFace `all-MiniLM-L6-v2` via `ingest.py` + `export_embeddings.py`
 - **Runtime (Render):** Pre-computed vectors in `src/rag/embeddings.npz` (366 chunks, 690KB flat file)
-- **Retrieval:** Cosine similarity via numpy — no model, no vector DB, no API calls at query time
-- **Memory footprint:** ~2MB for the vectors in RAM (loaded once into a module-level cache)
+- **Retrieval:** Cosine similarity over a TF-IDF word index built once from the chunk text in `embeddings.npz`. No model, no vector DB, no API calls at query time
+- **Memory footprint:** about 3MB in RAM: the word index (about 2MB) plus the loaded chunk file (about 0.5MB). Both are built or loaded once per process
 
-### 6.3 Why We Moved Away From HuggingFace + ChromaDB at Runtime
+### 6.3 Why I Moved Away From HuggingFace + ChromaDB at Runtime
 
 **The original approach** ran HuggingFace `all-MiniLM-L6-v2` directly on Render. The model requires ~450MB RAM to load plus PyTorch, and produced a ~350MB inference spike per request. Combined with FastAPI, LangGraph, and the Anthropic SDK, the baseline exceeded Render Standard's 2GB limit mid-conversation — causing OOM restarts that silently killed active sessions.
 
 **The insight:** The RAG knowledge base is 43KB of static text across 9 files. It doesn't change between deploys. There is no reason to run a 450MB ML model on the server to embed a 10-word query at runtime. The embeddings can be pre-computed once locally and committed to the repo as a flat file.
 
-**The fix:** `src/rag/export_embeddings.py` reads the local ChromaDB and exports all 366 chunk vectors + text + metadata to `src/rag/embeddings.npz`. At query time, `main.py` loads this file once (module-level cache), builds a lightweight keyword query vector, and runs cosine similarity in pure numpy — microseconds, zero model loading.
+**The fix:** `src/rag/export_embeddings.py` reads the local ChromaDB and exports all 366 chunk vectors + text + metadata to `src/rag/embeddings.npz`. At query time, `main.py` loads this file once (module-level cache), builds a TF-IDF word index from the chunk text, and runs cosine similarity in pure numpy with zero model loading. The stored MiniLM vectors are no longer used for ranking.
 
 This also eliminated `langchain-huggingface`, `langchain-chroma`, `chromadb`, and `sentence-transformers` from `requirements.txt` — packages that pulled in PyTorch and were the primary source of Render's memory pressure and slow cold starts.
 
@@ -209,9 +209,11 @@ Query is constructed from profile fields:
 ```
 "Career resources for {situation} transitioning from {role} to {target}"
 ```
-A keyword-hash vector (384-dim float32) is computed from this string and compared against all 366 pre-computed chunk vectors. Top-5 by cosine score are returned as context to the Research Agent.
+The string is turned into TF-IDF word weights in the same space as the chunks and compared against all 366 chunks. Top-5 by cosine score are returned as context to the Research Agent.
 
-**Pass 2 upgrade path:** For a larger knowledge base (more occupations, more metros), swap the keyword hash vector for a real embedding via Anthropic's voyage-3-lite API. That's a 10-line change in `query_embeddings_file()`.
+**Why not the keyword-hash vector:** An earlier version hashed the query's words into a 384-number vector and compared it against the stored MiniLM vectors. The two were built in different ways, so the scores did not mean much. On a 30-profile test (30 invented profiles, with expected source files chosen by me), the right source file ranked first for 6 profiles, the same as random picks. The TF-IDF version ranked it first for 17. The test is small and the labels are mine, so treat it as a rough guide.
+
+**Pass 2 upgrade path:** For a larger knowledge base (more occupations, more metros), swap the TF-IDF word matching for a real embedding via Anthropic's voyage-3-lite API. The stored chunk vectors would have to be rebuilt with the same model, and query text would then be sent to a third-party API, which this document currently says does not happen.
 
 ---
 
@@ -376,7 +378,7 @@ UptimeRobot pings the health endpoint every 5 minutes to keep the Render service
 |---|---|---|
 | High | Google OAuth + PostgreSQL | User accounts, persistent conversation history, saved profiles |
 | Medium | Google Calendar MCP | Schedule interviews, set follow-up reminders directly from Pivot |
-| Medium | Expanded RAG knowledge base — Pass 2 | More occupations, more metro areas; swap keyword hash vector for voyage-3-lite embeddings API |
+| Medium | Expanded RAG knowledge base — Pass 2 | More occupations, more metro areas; swap TF-IDF word matching for voyage-3-lite embeddings API |
 | Medium | Immigrant workforce | Credential recognition, language support, non-linear career history |
 | Low | Spanish language support | First non-English language expansion |
 | Low | Rate limiting + guest mode | Turn limits for unauthenticated users |

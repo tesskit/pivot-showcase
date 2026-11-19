@@ -84,6 +84,6 @@ These findings directly shaped Pivot's architecture:
 
 ## A Note on Scope
 
-Pivot is a career advocacy tool, not a therapy tool. The research above documents a systemic, structural problem — one that requires structural solutions. Pivot is one part of that solution: helping individual women navigate a system that was not designed for them, while we collectively work toward a system that is.
+Pivot is a career advocacy tool, not a therapy tool. The research above documents a systemic, structural problem — one that requires structural solutions. Pivot is one part of that solution: helping individual women navigate a system that was not designed for them, while I work toward a system that is.
 
 For further reading on systemic interventions, see Coffman's recommendation: rather than "change the women" approaches, focus on "change the system" approaches — reducing ambiguity in hiring, eliminating self-evaluation requirements, and proactive recruitment of qualified female candidates.

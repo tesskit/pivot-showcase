@@ -43,7 +43,7 @@ The transferable skills files are custom-built — they don't exist anywhere els
 
 **The fix:** Pre-compute the embeddings once locally and ship them as a flat file.
 
-`src/rag/export_embeddings.py` reads the local ChromaDB and exports all 366 chunk vectors + text + metadata to `src/rag/embeddings.npz` (690KB). At query time, `main.py` loads this file once into a module-level cache, builds a lightweight keyword query vector, and runs cosine similarity in pure numpy — microseconds, zero model loading, zero memory spike.
+`src/rag/export_embeddings.py` reads the local ChromaDB and exports all 366 chunk vectors + text + metadata to `src/rag/embeddings.npz` (690KB). At query time, `main.py` loads this file once into a module-level cache, builds a TF-IDF word index from the chunk text, and runs cosine similarity in pure numpy with zero model loading and zero memory spike. The stored MiniLM vectors are no longer used for ranking.
 
 This also eliminated `langchain-huggingface`, `langchain-chroma`, `chromadb`, and `sentence-transformers` from `requirements.txt` — the packages that pulled in PyTorch and caused Render's memory pressure and slow cold starts.
 
@@ -55,9 +55,9 @@ This also eliminated `langchain-huggingface`, `langchain-chroma`, `chromadb`, an
 |---|---|---|
 | Ingest | Local only | HuggingFace `all-MiniLM-L6-v2` via `ingest.py` |
 | Export | Local only | `export_embeddings.py` → `src/rag/embeddings.npz` |
-| Runtime retrieval | Render | numpy cosine similarity — no model, no vector DB |
+| Runtime retrieval | Render | TF-IDF word index over the chunk text + numpy cosine similarity. No model, no vector DB |
 
-**Memory footprint at runtime:** ~2MB for the vectors in RAM, loaded once on startup.
+**Memory footprint at runtime:** about 3MB in RAM: the word index (about 2MB) plus the loaded chunk file (about 0.5MB), both built or loaded once on startup.
 
 ---
 
@@ -69,7 +69,9 @@ The Research Agent builds a query from the user's profile:
 "Career resources for {situation} transitioning from {role} to {target}"
 ```
 
-A keyword-hash vector (384-dim float32) is computed from this string and compared against all 366 pre-computed chunk vectors. Top-5 chunks by cosine score are injected into the Research Agent's context.
+The string is turned into TF-IDF word weights in the same space as the chunks and compared against all 366 chunks. Top-5 chunks by cosine score are injected into the Research Agent's context.
+
+**Why not a keyword-hash vector:** An earlier version hashed the query's words into a 384-number vector and compared it against the stored MiniLM vectors. The two were built in different ways, so the scores did not mean much. On a 30-profile test (30 invented profiles, with expected source files chosen by me), the right source file ranked first for 6 profiles, the same as random picks. The TF-IDF version ranked it first for 17. The test is small and the labels are mine, so treat it as a rough guide.
 
 ---
 
@@ -93,4 +95,4 @@ HuggingFace, ChromaDB, and sentence-transformers never touch Render. They live i
 
 ## Upgrade Path — Pivot 1.1
 
-The keyword-hash vector is a lightweight approximation. For a larger corpus (more occupations, more metro areas, more industries), swap it for a real embedding via Anthropic's `voyage-3-lite` API. That's a 10-line change in `query_embeddings_file()` — the rest of the pipeline is unchanged.
+TF-IDF word matching works for a small, static corpus. For a larger corpus (more occupations, more metro areas, more industries), swap it for a real embedding via Anthropic's `voyage-3-lite` API. The stored chunk vectors would have to be rebuilt with the same model, and query text would then be sent to a third-party API, which this document currently says does not happen.

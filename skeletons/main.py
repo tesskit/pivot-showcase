@@ -79,8 +79,12 @@ def _load_embeddings_file():
     """Load the pre-computed embeddings file once into memory."""
     ...
 
-def _keyword_query_vector(query: str, dim: int = 384):
-    """Build a lightweight keyword-hash query vector (no model runs on the server)."""
+def _build_tfidf_index():
+    """Build a TF-IDF word-weight matrix from the chunk text, once per process."""
+    ...
+
+def _query_tfidf_vector(query: str):
+    """Turn a query into TF-IDF word weights in the same space as the chunks (no model runs on the server)."""
     ...
 
 def query_embeddings_file(profile: dict, top_k: int = 5) -> str:
